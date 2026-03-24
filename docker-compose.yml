@@ -1,0 +1,33 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: steam-price-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - API_KEY=${API_KEY:-your_api_key_here}
+    volumes:
+      - .:/app
+    restart: unless-stopped
+    networks:
+      - steam-network
+
+  frontend:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: steam-price-frontend
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - steam-network
+
+networks:
+  steam-network:
+    driver: bridge
