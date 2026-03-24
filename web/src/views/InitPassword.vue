@@ -1,18 +1,38 @@
 <template>
   <div class="init-password-container">
+    <!-- 语言切换按钮 -->
+    <div class="language-switcher">
+      <el-dropdown @command="handleLanguageChange" trigger="click">
+        <el-button 
+          type="info" 
+          size="small" 
+          plain
+          class="lang-btn"
+        >
+          🌐 {{ currentLocale === 'zh-CN' ? '中文' : 'English' }}
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="zh-CN">🇨🇳 中文</el-dropdown-item>
+            <el-dropdown-item command="en-US">🇺🇸 English</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+    </div>
+
     <!-- 加载中 -->
     <div v-if="checking" class="loading-card">
       <div class="loading-spinner">⏳</div>
-      <p class="loading-text">正在检查初始化状态...</p>
+      <p class="loading-text">{{ t('login.loading') }}</p>
     </div>
 
     <!-- 已初始化提示 -->
     <div v-else-if="alreadyInitialized" class="initialized-card">
       <div class="initialized-icon">⚠️</div>
-      <h2 class="initialized-title">密码已初始化</h2>
-      <p class="initialized-message">管理员密码已经完成初始化，无法再次设置。</p>
+      <h2 class="initialized-title">{{ t('initPassword.alreadyInitializedTitle') }}</h2>
+      <p class="initialized-message">{{ t('initPassword.alreadyInitializedMessage') }}</p>
       <el-button type="primary" @click="goToLogin" class="action-btn">
-        前往登录
+        {{ t('initPassword.goToLogin') }}
       </el-button>
     </div>
 
@@ -21,9 +41,9 @@
       <div class="init-header">
         <div class="logo">
           <span class="logo-icon">🎮</span>
-          <h1 class="logo-text">Steam 价格追踪</h1>
+          <h1 class="logo-text">{{ t('common.logoText') }}</h1>
         </div>
-        <p class="subtitle">首次使用，请设置管理员密码</p>
+        <p class="subtitle">{{ t('initPassword.subtitle') }}</p>
       </div>
 
       <el-form
@@ -37,7 +57,7 @@
           <el-input
             v-model="form.password"
             type="password"
-            placeholder="请输入管理员密码"
+            :placeholder="t('login.passwordPlaceholder')"
             show-password
             prefix-icon="Lock"
             @input="handlePasswordInput"
@@ -48,7 +68,7 @@
           <el-input
             v-model="form.confirmPassword"
             type="password"
-            placeholder="请确认管理员密码"
+            :placeholder="t('initPassword.confirmPasswordPlaceholder')"
             show-password
             prefix-icon="Lock"
           />
@@ -61,7 +81,7 @@
             @click="handleSubmit"
             class="submit-btn"
           >
-            设置密码
+            {{ t('initPassword.submit') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -70,40 +90,40 @@
         <div class="tips-card">
           <div class="tips-header">
             <span class="tips-icon">🔒</span>
-            <span class="tips-title">密码安全要求</span>
+            <span class="tips-title">{{ t('initPassword.passwordRequirements') }}</span>
           </div>
           <ul class="tips-list">
             <li>
               <span class="tip-icon">✓</span>
-              <span>密码长度至少 8 位，最多 32 位</span>
+              <span>{{ t('initPassword.passwordLength') }}</span>
             </li>
             <li>
               <span class="tip-icon">✓</span>
-              <span>必须包含以下四种字符中的至少两种：</span>
+              <span>{{ t('initPassword.passwordTypes') }}</span>
             </li>
             <li class="sub-item">
               <span class="tip-dot">•</span>
-              <span>大写字母 (A-Z)</span>
+              <span>{{ t('initPassword.uppercase') }}</span>
             </li>
             <li class="sub-item">
               <span class="tip-dot">•</span>
-              <span>小写字母 (a-z)</span>
+              <span>{{ t('initPassword.lowercase') }}</span>
             </li>
             <li class="sub-item">
               <span class="tip-dot">•</span>
-              <span>数字 (0-9)</span>
+              <span>{{ t('initPassword.numbers') }}</span>
             </li>
             <li class="sub-item">
               <span class="tip-dot">•</span>
-              <span>常用符号 (!@#$%^&*_-+=等)</span>
+              <span>{{ t('initPassword.specialChars') }}</span>
             </li>
             <li>
               <span class="tip-icon">✗</span>
-              <span>不能包含空格、中文或其他特殊字符</span>
+              <span>{{ t('initPassword.noSpaceChinese') }}</span>
             </li>
             <li>
               <span class="tip-icon">✓</span>
-              <span>请妥善保管您的密码</span>
+              <span>{{ t('initPassword.savePassword') }}</span>
             </li>
           </ul>
         </div>
@@ -113,17 +133,29 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { initPassword } from '../api/game'
-import { encrypt } from '../utils/crypto'
+import { encrypt, initKeys } from '../utils/crypto'
 
 const router = useRouter()
 const formRef = ref(null)
 const loading = ref(false)
 const alreadyInitialized = ref(false)
 const checking = ref(true)
+const { t, locale } = useI18n()
+
+// 当前语言
+const currentLocale = computed(() => locale.value)
+
+// 切换语言
+const handleLanguageChange = (lang) => {
+  locale.value = lang
+  localStorage.setItem('locale', lang)
+  ElMessage.success(lang === 'zh-CN' ? '语言已切换为中文' : 'Language switched to English')
+}
 
 const form = reactive({
   password: '',
@@ -266,6 +298,9 @@ const handleSubmit = async () => {
     if (valid) {
       loading.value = true
       try {
+        // 初始化加密密钥
+        await initKeys()
+        
         // 对密码进行加密
         const encryptedPassword = encrypt(form.password)
         
@@ -274,7 +309,7 @@ const handleSubmit = async () => {
           encrypted: true
         })
         
-        ElMessage.success('密码设置成功，即将跳转到登录页面')
+        ElMessage.success(t('settings.passwordChangeSuccess'))
         
         // 使用 replace 而不是 push，避免回退
         setTimeout(() => {
@@ -282,7 +317,7 @@ const handleSubmit = async () => {
         }, 1500)
       } catch (error) {
         console.error('Init password error:', error)
-        ElMessage.error(error.response?.data?.message || '设置失败，请重试')
+        ElMessage.error(error.response?.data?.message || t('common.error'))
       } finally {
         loading.value = false
       }
@@ -308,6 +343,26 @@ onMounted(() => {
   min-height: 100vh;
   background: linear-gradient(135deg, #1a1f2e 0%, #2d3a4f 100%);
   padding: 2rem;
+  position: relative;
+}
+
+/* 语言切换按钮样式 */
+.language-switcher {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  z-index: 1000;
+}
+
+.lang-btn {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #3b82f6;
+}
+
+.lang-btn:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.5);
 }
 
 /* 新增：加载状态样式 */

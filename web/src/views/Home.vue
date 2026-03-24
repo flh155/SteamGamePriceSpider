@@ -3,7 +3,7 @@
     <!-- API Key 设置提示弹窗 -->
     <el-dialog
       v-model="showApiKeyDialog"
-      title="🔑 首次使用 - 请配置 API Key"
+      :title="t('home.apiKeyConfig.title')"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
       :show-close="false"
@@ -13,7 +13,7 @@
       <div class="dialog-content">
         <div class="warning-banner">
           <span class="warning-icon">⚠️</span>
-          <p class="warning-text">检测到您尚未配置 API Key，请先完成配置才能使用本系统</p>
+          <p class="warning-text">{{ t('home.apiKeyConfig.warningText') }}</p>
         </div>
         
         <el-form
@@ -22,18 +22,18 @@
           :rules="apiKeyRules"
           label-position="top"
         >
-          <el-form-item label="IsThereAnyDeal API Key" prop="apiKey">
+          <el-form-item :label="t('home.apiKeyConfig.label')" prop="apiKey">
             <el-input
               v-model="apiKeyForm.apiKey"
               type="password"
-              placeholder="请输入你的 API Key"
+              :placeholder="t('home.apiKeyConfig.placeholder')"
               show-password
               clearable
               size="large"
             />
             <div class="form-tip">
-              ℹ️ API Key 用于查询 Steam 游戏价格数据，请妥善保管<br>
-              💡 你可以在 <a href="https://isthereanydeal.com/apps/" target="_blank">IsThereAnyDeal API 官网</a> 获取
+              ℹ️ {{ t('home.apiKeyConfig.tip1') }}<br>
+              💡 <a href="https://isthereanydeal.com/apps/" target="_blank">{{ t('home.apiKeyConfig.tip2') }}</a>
             </div>
           </el-form-item>
         </el-form>
@@ -47,7 +47,7 @@
             @click="handleSaveApiKey"
             size="large"
           >
-            保存并继续
+            {{ t('home.apiKeyConfig.saveAndContinue') }}
           </el-button>
         </div>
       </template>
@@ -56,13 +56,13 @@
     <!-- 搜索区域 -->
     <section class="search-section">
       <div class="search-container">
-        <h1 class="search-title">查找 Steam 游戏价格</h1>
-        <p class="search-subtitle">快速比较各平台价格，发现最佳优惠</p>
+        <h1 class="search-title">{{ t('home.title') }}</h1>
+        <p class="search-subtitle">{{ t('home.subtitle') }}</p>
         
         <div class="search-box">
           <el-input
             v-model="searchQuery"
-            placeholder="输入游戏英文名称，例如：Elden Ring, Cyberpunk 2077..."
+            :placeholder="t('home.searchPlaceholder')"
             size="large"
             clearable
             @keyup.enter="handleSearch"
@@ -72,7 +72,7 @@
             </template>
             <template #append>
               <el-button type="primary" @click="handleSearch" :loading="searching">
-                搜索
+                {{ t('common.search') }}
               </el-button>
             </template>
           </el-input>
@@ -86,14 +86,14 @@
         <span class="error-icon">⚠️</span>
         <span>{{ searchError }}</span>
         <el-button type="text" @click="searchError = null" size="small">
-          关闭
+          {{ t('common.cancel') }}
         </el-button>
       </div>
     </section>
 
     <!-- 搜索结果 -->
     <section v-if="searchResult && !searchResult.data.error" class="result-section">
-      <h2 class="section-title">搜索结果</h2>
+      <h2 class="section-title">{{ t('home.resultSection.title') }}</h2>
       <div class="price-card">
         <!-- 游戏封面图片 -->
         <div class="game-cover">
@@ -102,11 +102,11 @@
             :src="availableImageUrl" 
             :alt="searchResult.data.game_name"
             class="cover-image"
-            @error="handleImageError"
+            @error="handleImageErrors"
           />
           <div v-else class="no-image">
             <span class="no-image-icon">🖼️</span>
-            <p>暂无图片</p>
+            <p>{{ t('home.resultSection.noImage') }}</p>
           </div>
         </div>
         
@@ -117,21 +117,21 @@
         
         <div class="price-grid">
           <div class="price-item highlight">
-            <div class="price-label">当前最低价</div>
+            <div class="price-label">{{ t('home.resultSection.currentLowestPrice') }}</div>
             <div class="price-value">¥{{ searchResult.data.best_price }}</div>
-            <div class="price-shop">在售平台：{{ searchResult.data.best_price_shop_name }}</div>
+            <div class="price-shop">{{ t('home.resultSection.lowestShop') }}{{ searchResult.data.best_price_shop_name }}</div>
           </div>
           
           <div class="price-item">
-            <div class="price-label">历史最低价</div>
+            <div class="price-label">{{ t('home.resultSection.historicalLowestPrice') }}</div>
             <div class="price-value low">¥{{ searchResult.data.lowest_price }}</div>
-            <div class="price-shop">史低平台：{{ searchResult.data.lowest_shop_name }}</div>
+            <div class="price-shop">{{ t('home.resultSection.lowestShopHistory') }}{{ searchResult.data.lowest_shop_name }}</div>
           </div>
           
           <div class="price-item">
-            <div class="price-label">Steam 当前价</div>
+            <div class="price-label">{{ t('home.resultSection.steamCurrentPrice') }}</div>
             <div class="price-value">¥{{ searchResult.data.now_steam_price }}</div>
-            <div class="price-shop">在售平台：Steam</div>
+            <div class="price-shop">{{ t('home.resultSection.steamShop') }}</div>
           </div>
         </div>
       </div>
@@ -148,7 +148,7 @@
     <!-- 热门游戏列表 - 暂时隐藏 -->
     <!-- <section class="hot-games-section">
       <div class="section-header">
-        <h2 class="section-title">🔥 热门特惠游戏</h2>
+        <h2 class="section-title">🔥 {{ t('common.hotGames') }}</h2>
         <el-button @click="loadHotGames" :loading="loadingHot" circle>
           <span>🔄</span>
         </el-button>
@@ -181,14 +181,14 @@
               @click="viewGameDetail(game)"
               plain
             >
-              查看详情
+              {{ t('common.viewDetail') }}
             </el-button>
           </div>
         </div>
       </div>
       
       <div v-if="!loadingHot && hotGames.length === 0" class="empty-state">
-        <p>暂无数据</p>
+        <p>{{ t('home.noData') }}</p>
       </div>
     </section> -->
   </div>
@@ -197,7 +197,10 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElLoading } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { getGamePrice, getApiKey, setApiKey } from '../api/game'
+
+const { t } = useI18n()
 
 // API Key 相关
 const showApiKeyDialog = ref(false)
@@ -230,7 +233,7 @@ const checkApiKeyStatus = async () => {
       if (!apiKeyValue || apiKeyValue.trim() === '') {
         hasApiKey.value = false
         showApiKeyDialog.value = true
-        ElMessage.warning('请先配置 API Key 以使用本系统')
+        ElMessage.warning(t('home.apiKeyConfig.pleaseConfigApiKey'))
       } else {
         hasApiKey.value = true
       }
@@ -259,12 +262,12 @@ const handleSaveApiKey = async () => {
           api_key: apiKeyForm.apiKey
         })
         
-        ElMessage.success('API Key 保存成功，现在可以正常使用系统了')
+        ElMessage.success(t('settings.saveApiKeySuccess'))
         showApiKeyDialog.value = false
         hasApiKey.value = true
       } catch (error) {
         console.error('Save API Key error:', error)
-        ElMessage.error(error.response?.data?.message || '保存失败，请重试')
+        ElMessage.error(error.response?.data?.message || t('common.error'))
       } finally {
         savingApiKey.value = false
       }
@@ -297,7 +300,7 @@ const availableImageUrl = computed(() => {
 })
 
 // 图片加载错误处理
-const handleImageError = (e) => {
+const handleImageErrors = (e) => {
   console.warn('图片加载失败:', e.target.src)
   e.target.style.display = 'none'
   const noImageDiv = e.target.nextElementSibling
@@ -309,13 +312,13 @@ const handleImageError = (e) => {
 // 搜索处理
 const handleSearch = async () => {
   if (!searchQuery.value.trim()) {
-    ElMessage.warning('请输入游戏名称')
+    ElMessage.warning(t('home.pleaseEnterGameName'))
     return
   }
   
   // 如果没有 API Key，禁止搜索并显示弹窗
   if (!hasApiKey.value) {
-    ElMessage.warning('请先配置 API Key')
+    ElMessage.warning(t('home.apiKeyConfig.pleaseConfigApiKey'))
     showApiKeyDialog.value = true
     return
   }
@@ -327,7 +330,7 @@ const handleSearch = async () => {
   // 显示加载提示
   const loadingInstance = ElLoading.service({
     lock: true,
-    text: '查询中，请稍后...',
+    text: t('home.searching'),
     background: 'rgba(0, 0, 0, 0.7)'
   })
   
@@ -337,11 +340,11 @@ const handleSearch = async () => {
       searchError.value = response.data.error
     } else {
       searchResult.value = response
-      ElMessage.success('查询成功')
+      ElMessage.success(t('home.searchSuccess'))
     }
   } catch (error) {
     console.error('Search error:', error)
-    searchError.value = error.response?.data?.message || error.message || '查询失败，请重试'
+    searchError.value = error.response?.data?.message || error.message || t('home.searchError')
     ElMessage.error(searchError.value)
   } finally {
     searching.value = false
@@ -404,7 +407,7 @@ const loadHotGames = async () => {
     ]
   } catch (error) {
     console.error('Load hot games error:', error)
-    ElMessage.error('加载失败')
+    ElMessage.error(t('common.error'))
   } finally {
     loadingHot.value = false
   }
@@ -502,11 +505,11 @@ onMounted(() => {
 
 /* 搜索区域 */
 .search-section {
-  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
+  background: linear-gradient(135deg, #1e2a3a 0%, #252f40 100%);
   border-radius: 16px;
   padding: 3rem 2rem;
   text-align: center;
-  border: 1px solid var(--border-color);
+  border: 1px solid #2d3a4f;
   margin-bottom: 2rem;
 }
 
@@ -519,15 +522,15 @@ onMounted(() => {
   font-size: 2.5rem;
   font-weight: bold;
   margin-bottom: 0.5rem;
-  background: linear-gradient(135deg, var(--accent-blue), #8b5cf6);
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  color: var(--accent-blue);
+  color: #3b82f6;
 }
 
 .search-subtitle {
-  color: var(--text-secondary);
+  color: #9ca3af;
   font-size: 1.1rem;
   margin-bottom: 2rem;
 }
@@ -571,14 +574,14 @@ onMounted(() => {
 .section-title {
   font-size: 1.5rem;
   margin-bottom: 1.5rem;
-  color: var(--text-primary);
+  color: #e0e0e0;
 }
 
 .price-card {
-  background: var(--bg-card);
+  background: #252f40;
   border-radius: 12px;
   padding: 2rem;
-  border: 1px solid var(--border-color);
+  border: 1px solid #2d3a4f;
 }
 
 /* 游戏封面图片 */
@@ -588,7 +591,7 @@ onMounted(() => {
   margin: 0 auto 2rem auto;
   border-radius: 8px;
   overflow: hidden;
-  background: var(--bg-secondary);
+  background: #1e2a3a;
 }
 
 .cover-image {
@@ -605,8 +608,8 @@ onMounted(() => {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: var(--bg-secondary);
-  color: var(--text-muted);
+  background: #1e2a3a;
+  color: #6b7280;
 }
 
 .no-image-icon {
@@ -626,16 +629,16 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #2d3a4f;
 }
 
 .game-name {
   font-size: 1.5rem;
-  color: var(--text-primary);
+  color: #e0e0e0;
 }
 
 .game-id {
-  color: var(--text-muted);
+  color: #6b7280;
   font-size: 0.9rem;
 }
 
@@ -646,21 +649,21 @@ onMounted(() => {
 }
 
 .price-item {
-  background: var(--bg-secondary);
+  background: #1e2a3a;
   padding: 1.5rem;
   border-radius: 8px;
   text-align: center;
-  border: 1px solid var(--border-color);
+  border: 1px solid #2d3a4f;
   transition: all 0.3s ease;
 }
 
 .price-item.highlight {
-  border-color: var(--accent-green);
+  border-color: #10b981;
   background: rgba(16, 185, 129, 0.1);
 }
 
 .price-label {
-  color: var(--text-secondary);
+  color: #9ca3af;
   font-size: 0.9rem;
   margin-bottom: 0.5rem;
 }
@@ -668,16 +671,16 @@ onMounted(() => {
 .price-value {
   font-size: 2rem;
   font-weight: bold;
-  color: var(--accent-blue);
+  color: #3b82f6;
   margin-bottom: 0.5rem;
 }
 
 .price-value.low {
-  color: var(--accent-green);
+  color: #10b981;
 }
 
 .price-shop {
-  color: var(--text-muted);
+  color: #6b7280;
   font-size: 0.9rem;
 }
 
@@ -690,10 +693,10 @@ onMounted(() => {
 .empty-state {
   text-align: center;
   padding: 3rem;
-  color: var(--text-muted);
-  background: var(--bg-card);
+  color: #6b7280;
+  background: #252f40;
   border-radius: 12px;
-  border: 1px solid var(--border-color);
+  border: 1px solid #2d3a4f;
 }
 
 .empty-icon {

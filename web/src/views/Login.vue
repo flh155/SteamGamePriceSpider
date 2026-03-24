@@ -1,12 +1,32 @@
 <template>
   <div class="login-container">
+    <!-- 语言切换按钮 -->
+    <div class="language-switcher">
+      <el-dropdown @command="handleLanguageChange" trigger="click">
+        <el-button 
+          type="info" 
+          size="small" 
+          plain
+          class="lang-btn"
+        >
+          🌐 {{ currentLocale === 'zh-CN' ? '中文' : 'English' }}
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="zh-CN">🇨🇳 中文</el-dropdown-item>
+            <el-dropdown-item command="en-US">🇺🇸 English</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+    </div>
+
     <div class="login-card">
       <div class="login-header">
         <div class="logo">
           <span class="logo-icon">🎮</span>
-          <h1 class="logo-text">Steam 价格追踪</h1>
+          <h1 class="logo-text">{{ t('common.logoText') }}</h1>
         </div>
-        <p class="subtitle">欢迎回来，请登录您的账户</p>
+        <p class="subtitle">{{ t('login.welcomeBack') }}</p>
       </div>
 
       <el-form
@@ -20,7 +40,7 @@
           <el-input
             v-model="form.password"
             type="password"
-            placeholder="请输入管理员密码"
+            :placeholder="t('login.passwordPlaceholder')"
             show-password
             prefix-icon="Lock"
             @keyup.enter="handleLogin"
@@ -34,7 +54,7 @@
             @click="handleLogin"
             class="login-btn"
           >
-            登录
+            {{ t('login.login') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -43,15 +63,27 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { login } from '../api/game'
-import { encrypt } from '../utils/crypto'
+import { encrypt, initKeys } from '../utils/crypto'
 
 const router = useRouter()
 const formRef = ref(null)
 const loading = ref(false)
+const { t, locale } = useI18n()
+
+// 当前语言
+const currentLocale = computed(() => locale.value)
+
+// 切换语言
+const handleLanguageChange = (lang) => {
+  locale.value = lang
+  localStorage.setItem('locale', lang)
+  ElMessage.success(lang === 'zh-CN' ? '语言已切换为中文' : 'Language switched to English')
+}
 
 const form = reactive({
   password: ''
@@ -59,8 +91,8 @@ const form = reactive({
 
 const rules = {
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 8, message: '密码长度至少 8 位', trigger: 'blur' }
+    { required: true, message: t('login.passwordRequired'), trigger: 'blur' },
+    { min: 8, message: t('login.passwordMinLength'), trigger: 'blur' }
   ]
 }
 
@@ -71,6 +103,9 @@ const handleLogin = async () => {
     if (valid) {
       loading.value = true
       try {
+        // 初始化加密密钥
+        await initKeys()
+        
         // 对密码进行加密
         const encryptedPassword = encrypt(form.password)
         
@@ -84,12 +119,12 @@ const handleLogin = async () => {
         if (response.code === 200 && response.data && response.data.token) {
           localStorage.setItem('auth_token', response.data.token)
           
-          ElMessage.success('登录成功')
+          ElMessage.success(t('login.loginSuccess'))
           
           // 直接跳转，不使用 setTimeout
           router.replace('/')
         } else {
-          const errorMsg = response.message || '登录失败，请检查密码'
+          const errorMsg = response.message || t('login.loginFailed')
           ElMessage.error(errorMsg)
           loading.value = false
         }
@@ -97,7 +132,7 @@ const handleLogin = async () => {
         console.error('Login error:', error)
         loading.value = false
         
-        let errorMsg = '登录失败，请检查密码'
+        let errorMsg = t('login.loginFailed')
         
         if (error.message) {
           errorMsg = error.message
@@ -122,6 +157,26 @@ const handleLogin = async () => {
   min-height: 100vh;
   background: linear-gradient(135deg, #1a1f2e 0%, #2d3a4f 100%);
   padding: 2rem;
+  position: relative;
+}
+
+/* 语言切换按钮样式 */
+.language-switcher {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  z-index: 1000;
+}
+
+.lang-btn {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #3b82f6;
+}
+
+.lang-btn:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.5);
 }
 
 .login-card {

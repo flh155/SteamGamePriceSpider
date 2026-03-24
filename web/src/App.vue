@@ -5,23 +5,40 @@
       <div class="nav-container">
         <div class="logo">
           <span class="logo-icon">🎮</span>
-          <span class="logo-text">Steam 价格追踪</span>
+          <span class="logo-text">{{ t('common.logoText') }}</span>
         </div>
         <div class="nav-links">
-          <router-link to="/" class="nav-link active">首页</router-link>
-          <a href="#" class="nav-link">热门游戏 (功能开发中..)</a>
-          <a href="#" class="nav-link">关于 (功能开发中)</a>
+          <router-link to="/" class="nav-link active">{{ t('common.home') }}</router-link>
+          <a href="#" class="nav-link">{{ t('common.hotGames') }}</a>
+          <a href="#" class="nav-link">{{ t('common.about') }}</a>
           <div class="user-actions">
+            <!-- 语言切换按钮 -->
+            <el-dropdown @command="handleLanguageChange" trigger="click">
+              <el-button 
+                type="info" 
+                size="small" 
+                plain
+              >
+                🌐 {{ currentLocale === 'zh-CN' ? '中文' : 'English' }}
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="zh-CN">🇨🇳 中文</el-dropdown-item>
+                  <el-dropdown-item command="en-US">🇺🇸 English</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+            
             <el-button 
               type="info" 
               size="small" 
               @click="goToSettings" 
               plain
             >
-              ⚙️ 设置
+              ⚙️ {{ t('common.settings') }}
             </el-button>
             <el-button type="danger" size="small" @click="handleLogout" plain>
-              退出登录
+              {{ t('common.logout') }}
             </el-button>
           </div>
         </div>
@@ -35,7 +52,7 @@
 
     <!-- 页脚 -->
     <footer v-if="!isAuthPage" class="footer">
-      <p>© 2026 Steam 价格追踪 - 数据来源：IsThereAnyDeal API</p>
+      <p>{{ t('common.footer') }}</p>
     </footer>
   </div>
 </template>
@@ -44,10 +61,22 @@
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { logout } from './api/game'
 
 const router = useRouter()
 const route = useRoute()
+const { t, locale } = useI18n()
+
+// 当前语言
+const currentLocale = computed(() => locale.value)
+
+// 切换语言
+const handleLanguageChange = (lang) => {
+  locale.value = lang
+  localStorage.setItem('locale', lang)
+  ElMessage.success(lang === 'zh-CN' ? '语言已切换为中文' : 'Language switched to English')
+}
 
 // 判断是否是认证相关页面
 const isAuthPage = computed(() => {
@@ -67,7 +96,7 @@ const handleLogout = async () => {
     console.error('Logout error:', error)
   } finally {
     localStorage.removeItem('auth_token')
-    ElMessage.success('已退出登录')
+    ElMessage.success(t('common.success'))
     router.push('/login')
   }
 }
